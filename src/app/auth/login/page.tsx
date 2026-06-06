@@ -75,10 +75,9 @@ export default function LoginPage() {
             <input
               className="input"
               type="password"
-              placeholder="••••"
-              maxLength={4}
+              placeholder="비밀번호"
               value={password}
-              onChange={e => setPassword(e.target.value.replace(/\D/g, ''))}
+              onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
             />
           </div>
@@ -86,7 +85,7 @@ export default function LoginPage() {
           <button
             className="btn-primary w-full"
             onClick={handleLogin}
-            disabled={loading || !selectedId || password.length !== 4}
+            disabled={loading || !selectedId || !password}
           >
             {loading ? '로그인 중...' : '로그인'}
           </button>
