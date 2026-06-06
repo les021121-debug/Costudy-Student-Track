@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // 이름으로 이메일 자동 생성
-    const emailName = name.replace(/\s/g, '').toLowerCase()
-    const email = `${emailName}@costudymath.com`
+    // UUID 기반으로 고유 이메일 자동생성
+    const uniqueId = Date.now()
+    const email = `teacher${uniqueId}@costudymath.com`
 
     const { data, error } = await supabase.auth.admin.createUser({
       email,
