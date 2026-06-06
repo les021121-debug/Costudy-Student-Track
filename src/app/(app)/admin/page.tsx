@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Plus, Pencil, Trash2, Shield } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import StudentImportModal from '@/components/forms/StudentImportModal'
 
 type Teacher = { id: string; name: string; email: string; is_admin: boolean }
 
@@ -15,6 +16,7 @@ export default function AdminPage() {
   const [form, setForm] = useState({ name: '', password: '', is_admin: false })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [showImport, setShowImport] = useState(false)
 
   const load = async () => {
     const supabase = createClient()
@@ -94,12 +96,20 @@ export default function AdminPage() {
           </h1>
           <p className="text-sm text-gray-500 mt-1">선생님 계정을 관리합니다</p>
         </div>
-        <button
-          className="btn-primary flex items-center gap-2"
-          onClick={() => { setEditTarget(null); setForm({ name: '', password: '', is_admin: false }); setError(''); setShowForm(true) }}
-        >
-          <Plus size={16} /> 선생님 추가
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="btn-secondary flex items-center gap-2"
+            onClick={() => setShowImport(true)}
+          >
+            📂 학생 일괄 등록
+          </button>
+          <button
+            className="btn-primary flex items-center gap-2"
+            onClick={() => { setEditTarget(null); setForm({ name: '', password: '', is_admin: false }); setError(''); setShowForm(true) }}
+          >
+            <Plus size={16} /> 선생님 추가
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -141,6 +151,13 @@ export default function AdminPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showImport && (
+        <StudentImportModal
+          onClose={() => setShowImport(false)}
+          onSuccess={() => load()}
+        />
       )}
 
       <div className="grid gap-3">
