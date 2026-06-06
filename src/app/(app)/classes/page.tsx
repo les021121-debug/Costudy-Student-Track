@@ -11,6 +11,8 @@ type Class = {
   schedule: string
   textbook: string
   current_progress: string
+  branch: string
+  teacher_id: string
   _studentCount?: number
 }
 
@@ -19,15 +21,15 @@ export default function ClassesPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState<Class | null>(null)
-  const [form, setForm] = useState({ name: '', subject: '수학', schedule: '', textbook: '', current_progress: '' })
+  const [form, setForm] = useState({ name: '', subject: '수학', schedule: '', textbook: '', current_progress: '', branch: '알파' })
+  const [activeTab, setActiveTab] = useState<'알파' | '베타'>('알파')
 
   const load = async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data } = await supabase.from('classes').select('*').eq('teacher_id', user.id).order('created_at')
+    const { data } = await supabase.from('classes').select('*').order('created_at')
     if (data) {
-      // get student counts
       const counts = await Promise.all(data.map(async c => {
         const { count } = await supabase.from('student_classes').select('*', { count: 'exact', head: true }).eq('class_id', c.id)
         return count ?? 0
@@ -50,7 +52,7 @@ export default function ClassesPage() {
     }
     setShowForm(false)
     setEditTarget(null)
-    setForm({ name: '', subject: '수학', schedule: '', textbook: '', current_progress: '' })
+    setForm({ name: '', subject: '수학', schedule: '', textbook: '', current_progress: '', branch: '알파' })
     load()
   }
 
@@ -63,17 +65,34 @@ export default function ClassesPage() {
 
   const openEdit = (c: Class) => {
     setEditTarget(c)
-    setForm({ name: c.name, subject: c.subject, schedule: c.schedule || '', textbook: c.textbook || '', current_progress: c.current_progress || '' })
+    setForm({ name: c.name, subject: c.subject, schedule: c.schedule || '', textbook: c.textbook || '', current_progress: c.current_progress || '', branch: c.branch || '알파' })
     setShowForm(true)
   }
+
+  const filteredClasses = classes.filter(c => c.branch === activeTab)
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">반 관리</h1>
-        <button className="btn-primary flex items-center gap-2" onClick={() => { setEditTarget(null); setForm({ name: '', subject: '수학', schedule: '', textbook: '', current_progress: '' }); setShowForm(true) }}>
+        <button className="btn-primary flex items-center gap-2" onClick={() => { setEditTarget(null); setForm({ name: '', subject: '수학', schedule: '', textbook: '', current_progress: '', branch: activeTab }); setShowForm(true) }}>
           <Plus size={16} /> 반 추가
         </button>
+      </div>
+
+      {/* 알파/베타 탭 */}
+      <div className="flex gap-2 mb-5">
+        {(['알파', '베타'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-5 py-2 rounded-xl font-medium text-sm transition-colors ${
+              activeTab === tab ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            코스터디 {tab}
+          </button>
+        ))}
       </div>
 
       {showForm && (
@@ -81,6 +100,22 @@ export default function ClassesPage() {
           <div className="card w-full max-w-md">
             <h2 className="font-bold text-lg mb-4">{editTarget ? '반 수정' : '새 반 추가'}</h2>
             <div className="space-y-3">
+              <div>
+                <label className="label">학원 *</label>
+                <div className="flex gap-2">
+                  {(['알파', '베타'] as const).map(b => (
+                    <button
+                      key={b}
+                      onClick={() => setForm(f => ({ ...f, branch: b }))}
+                      className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
+                        form.branch === b ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      코스터디 {b}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div>
                 <label className="label">반 이름 *</label>
                 <input className="input" placeholder="예: 중3 화목반" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
@@ -112,15 +147,15 @@ export default function ClassesPage() {
 
       {loading ? (
         <p className="text-gray-400 text-sm">불러오는 중...</p>
-      ) : classes.length === 0 ? (
+      ) : filteredClasses.length === 0 ? (
         <div className="card text-center py-16 text-gray-400">
           <BookOpen size={40} className="mx-auto mb-3 opacity-30" />
-          <p>아직 등록된 반이 없어요</p>
+          <p>코스터디 {activeTab}에 등록된 반이 없어요</p>
           <p className="text-sm mt-1">위의 버튼으로 반을 추가해보세요</p>
         </div>
       ) : (
         <div className="grid gap-3">
-          {classes.map(c => (
+          {filteredClasses.map(c => (
             <div key={c.id} className="card flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center flex-shrink-0">
                 <BookOpen size={18} className="text-primary-600" />
