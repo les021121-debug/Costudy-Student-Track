@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 export default function SignupPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ name: '', email: '', password: '', code: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -14,10 +14,6 @@ export default function SignupPage() {
     setError('')
     if (!form.name || !form.email || !form.password || !form.code) {
       setError('모든 항목을 입력해주세요.')
-      return
-    }
-    if (form.code !== '4019') {
-      setError('인증 코드가 올바르지 않습니다.')
       return
     }
     setLoading(true)
@@ -61,10 +57,6 @@ export default function SignupPage() {
           <div>
             <label className="label">비밀번호</label>
             <input className="input" type="password" placeholder="6자 이상" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
-          </div>
-          <div>
-            <label className="label">선생님 인증 코드</label>
-            <input className="input" type="password" placeholder="인증 코드 입력" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} onKeyDown={e => e.key === 'Enter' && handleSignup()} />
           </div>
           {error && <p className="text-sm text-danger">{error}</p>}
           <button className="btn-primary w-full" onClick={handleSignup} disabled={loading}>
