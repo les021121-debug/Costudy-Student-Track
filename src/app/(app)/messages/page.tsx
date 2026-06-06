@@ -19,14 +19,19 @@ export default function MessagesPage() {
   const [copied, setCopied] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [savedComm, setSavedComm] = useState<string | null>(null)
+  const [teacherName, setTeacherName] = useState('')
 
   useEffect(() => {
     const load = async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data } = await supabase.from('classes').select('*').eq('teacher_id', user.id)
-      if (data) setClasses(data)
+      const [{ data: classData }, { data: teacher }] = await Promise.all([
+        supabase.from('classes').select('*').eq('teacher_id', user.id),
+        supabase.from('teachers').select('name').eq('id', user.id).single(),
+      ])
+      if (classData) setClasses(classData)
+      if (teacher) setTeacherName(teacher.name)
     }
     load()
   }, [])
@@ -132,7 +137,7 @@ export default function MessagesPage() {
 - 이모지는 아주 살짝만 (1~2개)
 - 귀엽고 인간적인 느낌
 - 길이는 400~600자 내외
-- 선생님 이름 자리는 [선생님 성함]T 로 표시
+- 선생님 이름은 반드시 '${teacherName}T' 로 표시 (절대 [선생님 성함] 같은 플레이스홀더 사용 금지)
 
 학생 정보:
 - 학생 이름: ${stu?.name}
