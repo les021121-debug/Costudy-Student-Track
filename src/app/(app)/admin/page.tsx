@@ -9,11 +9,10 @@ type Teacher = { id: string; name: string; email: string; is_admin: boolean }
 export default function AdminPage() {
   const router = useRouter()
   const [teachers, setTeachers] = useState<Teacher[]>([])
-  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState<Teacher | null>(null)
-  const [form, setForm] = useState({ name: '', email: '', password: '', is_admin: false })
+  const [form, setForm] = useState({ name: '', password: '', is_admin: false })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -21,11 +20,8 @@ export default function AdminPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.replace('/auth/login'); return }
-
     const { data: me } = await supabase.from('teachers').select('is_admin').eq('id', user.id).single()
     if (!me?.is_admin) { router.replace('/dashboard'); return }
-    setIsAdmin(true)
-
     const { data } = await supabase.from('teachers').select('*').order('name')
     if (data) setTeachers(data)
     setLoading(false)
@@ -36,31 +32,27 @@ export default function AdminPage() {
   const save = async () => {
     setSaving(true)
     setError('')
-    const supabase = createClient()
 
     if (editTarget) {
-      // 이름, 이메일, 관리자 여부 수정
+      const supabase = createClient()
       await supabase.from('teachers').update({
         name: form.name,
-        email: form.email,
         is_admin: form.is_admin,
       }).eq('id', editTarget.id)
 
-      // 비밀번호 변경 (입력한 경우만)
       if (form.password) {
         const res = await fetch('/api/admin/update-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: editTarget.id, password: form.password }),
         })
-        if (!res.ok) setError('비밀번호 변경 중 오류가 발생했습니다.')
+        if (!res.ok) { setError('비밀번호 변경 중 오류가 발생했습니다.'); setSaving(false); return }
       }
     } else {
-      // 새 선생님 추가
       const res = await fetch('/api/admin/create-teacher', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, email: form.email, password: form.password, is_admin: form.is_admin }),
+        body: JSON.stringify({ name: form.name, password: form.password, is_admin: form.is_admin }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -73,7 +65,7 @@ export default function AdminPage() {
     setSaving(false)
     setShowForm(false)
     setEditTarget(null)
-    setForm({ name: '', email: '', password: '', is_admin: false })
+    setForm({ name: '', password: '', is_admin: false })
     load()
   }
 
@@ -86,7 +78,7 @@ export default function AdminPage() {
 
   const openEdit = (t: Teacher) => {
     setEditTarget(t)
-    setForm({ name: t.name, email: t.email, password: '', is_admin: t.is_admin })
+    setForm({ name: t.name, password: '', is_admin: t.is_admin })
     setError('')
     setShowForm(true)
   }
@@ -104,7 +96,7 @@ export default function AdminPage() {
         </div>
         <button
           className="btn-primary flex items-center gap-2"
-          onClick={() => { setEditTarget(null); setForm({ name: '', email: '', password: '', is_admin: false }); setError(''); setShowForm(true) }}
+          onClick={() => { setEditTarget(null); setForm({ name: '', password: '', is_admin: false }); setError(''); setShowForm(true) }}
         >
           <Plus size={16} /> 선생님 추가
         </button>
@@ -120,12 +112,16 @@ export default function AdminPage() {
                 <input className="input" placeholder="홍길동" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div>
-                <label className="label">이메일 *</label>
-                <input className="input" type="email" placeholder="teacher@costudymath.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-              </div>
-              <div>
-                <label className="label">{editTarget ? '새 비밀번호 (변경할 경우만 입력)' : '비밀번호 *'}</label>
-                <input className="input" type="password" placeholder={editTarget ? '변경하지 않으면 비워두세요' : '6자 이상'} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+                <label className="label">{editTarget ? '새 비밀번호 (변경할 경우만 입력)' : '비밀번호 4자리 *'}</label>
+                <input
+                  className="input"
+                  type="password"
+                  placeholder={editTarget ? '변경하지 않으면 비워두세요' : '숫자 4자리'}
+                  maxLength={4}
+                  value={form.password}
+                  onChange={e => setForm(f => ({ ...f, password: e.target.value.replace(/\D/g, '') }))}
+                />
+                {!editTarget && <p className="text-xs text-gray-400 mt-1">선생님에게 알려줄 4자리 숫자 비밀번호예요</p>}
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="is_admin" checked={form.is_admin} onChange={e => setForm(f => ({ ...f, is_admin: e.target.checked }))} />
@@ -135,7 +131,11 @@ export default function AdminPage() {
             {error && <p className="text-sm text-danger mt-3">{error}</p>}
             <div className="flex gap-2 mt-5">
               <button className="btn-secondary flex-1" onClick={() => setShowForm(false)}>취소</button>
-              <button className="btn-primary flex-1" onClick={save} disabled={saving || !form.name || !form.email || (!editTarget && !form.password)}>
+              <button
+                className="btn-primary flex-1"
+                onClick={save}
+                disabled={saving || !form.name || (!editTarget && form.password.length !== 4)}
+              >
                 {saving ? '저장 중...' : '저장'}
               </button>
             </div>
@@ -154,7 +154,6 @@ export default function AdminPage() {
                 <span className="font-bold text-gray-900">{t.name} 선생님</span>
                 {t.is_admin && <span className="badge bg-primary-50 text-primary-600">관리자</span>}
               </div>
-              <p className="text-sm text-gray-500">{t.email}</p>
             </div>
             <div className="flex gap-1">
               <button onClick={() => openEdit(t)} className="p-2 text-gray-400 hover:text-primary-500 transition-colors">

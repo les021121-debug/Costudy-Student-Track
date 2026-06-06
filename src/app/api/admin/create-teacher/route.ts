@@ -3,12 +3,16 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, is_admin } = await req.json()
+    const { name, password, is_admin } = await req.json()
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
+
+    // 이름으로 이메일 자동 생성
+    const emailName = name.replace(/\s/g, '').toLowerCase()
+    const email = `${emailName}@costudymath.com`
 
     const { data, error } = await supabase.auth.admin.createUser({
       email,
