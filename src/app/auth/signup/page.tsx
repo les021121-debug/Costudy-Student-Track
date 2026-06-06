@@ -12,8 +12,12 @@ export default function SignupPage() {
 
   const handleSignup = async () => {
     setError('')
-    if (!form.name || !form.email || !form.password || !form.code) {
+    if (!form.name || !form.email || !form.password) {
       setError('모든 항목을 입력해주세요.')
+      return
+    }
+    if (form.password.length < 6) {
+      setError('비밀번호는 6자 이상이어야 합니다.')
       return
     }
     setLoading(true)
@@ -56,7 +60,7 @@ export default function SignupPage() {
           </div>
           <div>
             <label className="label">비밀번호</label>
-            <input className="input" type="password" placeholder="6자 이상" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+            <input className="input" type="password" placeholder="6자 이상" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} onKeyDown={e => e.key === 'Enter' && handleSignup()} />
           </div>
           {error && <p className="text-sm text-danger">{error}</p>}
           <button className="btn-primary w-full" onClick={handleSignup} disabled={loading}>
