@@ -65,6 +65,10 @@ export default function LoginPage() {
           >
             {loading ? '로그인 중...' : '로그인'}
           </button>
+        <p className="text-center text-sm text-gray-500 mt-4">
+          처음 오셨나요?{' '}
+          <a href="/auth/signup" className="text-primary-500 font-medium hover:underline">선생님 가입</a>
+        </p>
         </div>
       </div>
     </div>
