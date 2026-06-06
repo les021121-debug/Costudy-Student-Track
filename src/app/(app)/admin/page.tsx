@@ -112,16 +112,16 @@ export default function AdminPage() {
                 <input className="input" placeholder="홍길동" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div>
-                <label className="label">{editTarget ? '새 비밀번호 (변경할 경우만 입력)' : '비밀번호 4자리 *'}</label>
+                <label className="label">{editTarget ? '새 비밀번호 (변경할 경우만 입력)' : '비밀번호 6자리 *'}</label>
                 <input
                   className="input"
                   type="password"
-                  placeholder={editTarget ? '변경하지 않으면 비워두세요' : '숫자 4자리'}
-                  maxLength={4}
+                  placeholder={editTarget ? '변경하지 않으면 비워두세요' : '숫자 6자리'}
+                  maxLength={6}
                   value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value.replace(/\D/g, '') }))}
                 />
-                {!editTarget && <p className="text-xs text-gray-400 mt-1">선생님에게 알려줄 4자리 숫자 비밀번호예요</p>}
+                {!editTarget && <p className="text-xs text-gray-400 mt-1">선생님에게 알려줄 6자리 숫자 비밀번호예요</p>}
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="is_admin" checked={form.is_admin} onChange={e => setForm(f => ({ ...f, is_admin: e.target.checked }))} />
@@ -134,7 +134,7 @@ export default function AdminPage() {
               <button
                 className="btn-primary flex-1"
                 onClick={save}
-                disabled={saving || !form.name || (!editTarget && form.password.length !== 4)}
+                disabled={saving || !form.name || (!editTarget && form.password.length !== 6)}
               >
                 {saving ? '저장 중...' : '저장'}
               </button>

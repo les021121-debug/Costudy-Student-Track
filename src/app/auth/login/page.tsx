@@ -71,13 +71,14 @@ export default function LoginPage() {
             </select>
           </div>
           <div>
-            <label className="label">비밀번호 (4자리)</label>
+            <label className="label">비밀번호 (6자리)</label>
             <input
               className="input"
               type="password"
-              placeholder="비밀번호"
+              placeholder="••••••"
+              maxLength={6}
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value.replace(/\D/g, ''))}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
             />
           </div>
@@ -85,7 +86,7 @@ export default function LoginPage() {
           <button
             className="btn-primary w-full"
             onClick={handleLogin}
-            disabled={loading || !selectedId || !password}
+            disabled={loading || !selectedId || password.length !== 6}
           >
             {loading ? '로그인 중...' : '로그인'}
           </button>
