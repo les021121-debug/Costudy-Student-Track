@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { LayoutDashboard, Users, BookOpen, MessageSquare, LogOut, Shield, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, MessageSquare, LogOut, Shield, Menu, X, Settings } from 'lucide-react'
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 
@@ -84,7 +84,20 @@ export default function Sidebar() {
         )}
       </nav>
 
-      <div className="p-3 border-t border-gray-100">
+      <div className="p-3 border-t border-gray-100 space-y-1">
+        <Link
+          href="/settings"
+          onClick={() => setOpen(false)}
+          className={clsx(
+            'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors w-full',
+            pathname.startsWith('/settings')
+              ? 'bg-primary-50 text-primary-600'
+              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+          )}
+        >
+          <Settings size={18} />
+          내 설정
+        </Link>
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors w-full"
@@ -98,7 +111,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* 모바일 상단 바 */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-primary-500 rounded-lg flex items-center justify-center">
@@ -111,7 +123,6 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* 모바일 드로어 */}
       {open && (
         <div className="md:hidden fixed inset-0 z-30" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/30" />
@@ -121,7 +132,6 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* 데스크탑 사이드바 */}
       <aside className="hidden md:flex w-56 min-h-screen bg-white border-r border-gray-100 flex-col">
         <NavContent />
       </aside>
