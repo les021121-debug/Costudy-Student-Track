@@ -69,10 +69,10 @@ export default function StudentsPage() {
     load()
   }
 
-  const toggleStatus = async (s: Student) => {
+  const setStatus = async (s: Student, status: string) => {
+    if (s.status === status) return
     const supabase = createClient()
-    const newStatus = s.status === 'active' ? 'paused' : 'active'
-    await supabase.from('students').update({ status: newStatus }).eq('id', s.id)
+    await supabase.from('students').update({ status }).eq('id', s.id)
     load()
   }
 
@@ -93,6 +93,27 @@ export default function StudentsPage() {
 
   const activeStudents = students.filter(s => s.status === 'active')
   const pausedStudents = students.filter(s => s.status === 'paused')
+
+  const StatusButtons = ({ s }: { s: Student }) => (
+    <div className="flex gap-1">
+      <button
+        onClick={() => setStatus(s, 'active')}
+        className={`text-xs px-2 py-1 rounded-lg font-medium transition-colors ${
+          s.status === 'active' ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+        }`}
+      >
+        재원
+      </button>
+      <button
+        onClick={() => setStatus(s, 'paused')}
+        className={`text-xs px-2 py-1 rounded-lg font-medium transition-colors ${
+          s.status === 'paused' ? 'bg-yellow-400 text-white' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+        }`}
+      >
+        휴원
+      </button>
+    </div>
+  )
 
   return (
     <div>
@@ -176,9 +197,7 @@ export default function StudentsPage() {
                   {s.parent_phone && <p className="text-sm text-gray-500 mt-0.5">📞 {s.parent_phone}</p>}
                 </div>
                 <div className="flex gap-1 items-center">
-                  <button onClick={() => toggleStatus(s)} className="text-xs px-2 py-1 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-100">
-                    휴원
-                  </button>
+                  <StatusButtons s={s} />
                   <button onClick={() => openEdit(s)} className="p-2 text-gray-400 hover:text-primary-500 transition-colors">
                     <Pencil size={15} />
                   </button>
@@ -207,9 +226,7 @@ export default function StudentsPage() {
                       {s.parent_phone && <p className="text-sm text-gray-400 mt-0.5">📞 {s.parent_phone}</p>}
                     </div>
                     <div className="flex gap-1 items-center">
-                      <button onClick={() => toggleStatus(s)} className="text-xs px-2 py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100">
-                        복귀
-                      </button>
+                      <StatusButtons s={s} />
                       <button onClick={() => openEdit(s)} className="p-2 text-gray-400 hover:text-primary-500 transition-colors">
                         <Pencil size={15} />
                       </button>
