@@ -20,6 +20,7 @@ export default function MessagesPage() {
   const [feedback, setFeedback] = useState('')
   const [savedComm, setSavedComm] = useState<string | null>(null)
   const [teacherName, setTeacherName] = useState('')
+  const [messageStyle, setMessageStyle] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -28,10 +29,13 @@ export default function MessagesPage() {
       if (!user) return
       const [{ data: classData }, { data: teacher }] = await Promise.all([
         supabase.from('classes').select('*').eq('teacher_id', user.id),
-        supabase.from('teachers').select('name').eq('id', user.id).single(),
+        supabase.from('teachers').select('name, message_style').eq('id', user.id).single(),
       ])
       if (classData) setClasses(classData)
-      if (teacher) setTeacherName(teacher.name)
+      if (teacher) {
+        setTeacherName(teacher.name)
+        setMessageStyle(teacher.message_style || '')
+      }
     }
     load()
   }, [])
@@ -112,32 +116,26 @@ export default function MessagesPage() {
     const absent = (attendCount['결석'] || 0) + (attendCount['병결'] || 0)
     const earlyLeave = attendCount['조퇴'] || 0
 
-    const prompt = `당신은 코스터디 수학학원 선생님입니다. 학부모님께 카카오톡으로 보낼 월별 학생 관리 메시지를 작성해주세요.
-
-아래는 실제 이 선생님이 보낸 문자 예시입니다. 이 톤과 스타일을 최대한 따라주세요:
-
----예시 시작---
-안녕하세요 서진이 대수 st1 담당 코스터디 은서T 입니다.
-
-현재 진도는 3단원 수열의 합까지 나갔고 개념원리 필수 문항과 유제는 다 풀고 연습문제는 st1정도만 풀고 있습니다. st1이다 보니 난이도 있는 문제를 푸는 것이 아닌 이 개념이 무엇인지 확실히 하는 게 목표입니다.
-
-서진이는 제가 본 학생들 중에 제일 열심히하고 잘 따라오는 학생이어서 제 최애 학생들 중 하나입니다. 서진이랑 오래도록 공부하고 싶은 마음도 커서 더 많은 걸 알려주려고 저도 열심히 공부하게 되는 것 같습니다.
-
-학생들을 가르치는 입장에서 친구들과 열심히 풀어보려는 고민을 하는 모습에 감동받고 좋기도 하다가 피곤해도 와서 공부하고 쏟아지는 졸음을 참으려 안간힘을 쓰는 모습을 보면 좀 안쓰럽기도 합니다. 그럼에도 불구하고 저는 테스트를 지게 하고 숙제를 주는 게 학생들에게 많이 미안하기도 하고 저에게도 이게 맞는 지 수십번 질문을 던지지만 답은 결국 우리 학생들의 미래를 위해서 해야한다 가 되더라구요. 지금까지 믿어주신 만큼 최선을 다해서 우리 학생들 잘 올려보내겠습니다! 감사합니다~
----예시 끝---
-
-스타일 가이드:
+    const styleSection = messageStyle
+      ? `아래는 이 선생님이 실제로 보낸 문자 예시입니다. 이 톤과 스타일을 최대한 따라주세요:\n\n---예시 시작---\n${messageStyle}\n---예시 끝---\n`
+      : `스타일 가이드:
 - 딱딱하지 않고 자연스럽고 따뜻한 말투
 - AI 같은 느낌 절대 금지 (항목 나열, 번호 매기기, 과도한 존댓말 금지)
 - 진도를 구체적으로 설명하되 왜 이렇게 가르치는지 이유도 함께
-- 학생 개인에 대한 구체적인 관찰을 담아서 (기록된 태도/과제 항목 활용)
+- 학생 개인에 대한 구체적인 관찰을 담아서
 - 선생님 본인의 솔직한 감정도 자연스럽게 표현
-- 부족한 점은 학생 편에서 안타까워하면서도 따끔하게
 - 마무리는 따뜻하고 진심 어리게
 - 이모지는 아주 살짝만 (1~2개)
-- 귀엽고 인간적인 느낌
-- 길이는 400~600자 내외
+- 길이는 400~600자 내외`
+
+    const prompt = `당신은 코스터디 수학학원 선생님입니다. 학부모님께 카카오톡으로 보낼 월별 학생 관리 메시지를 작성해주세요.
+
+${styleSection}
+
+공통 가이드:
+- AI 같은 느낌 절대 금지 (항목 나열, 번호 매기기 금지)
 - 선생님 이름은 반드시 '${teacherName}T' 로 표시 (절대 [선생님 성함] 같은 플레이스홀더 사용 금지)
+- 길이는 400~600자 내외
 
 학생 정보:
 - 학생 이름: ${stu?.name}
@@ -154,7 +152,7 @@ ${topNegative.length > 0 ? `- 자주 보인 부정적 태도: ${topNegative.join
 ${topHomework.length > 0 ? `- 과제 수행 특징: ${topHomework.join(', ')}` : ''}
 ${avgTest ? `- 일일 테스트 평균 정답률: ${avgTest}` : ''}
 
-위 기록을 바탕으로 예시 문자처럼 자연스럽고 따뜻한 학부모 카카오톡 메시지를 작성해주세요. 절대 AI가 쓴 것처럼 느껴지면 안 됩니다.`
+위 기록을 바탕으로 자연스럽고 따뜻한 학부모 카카오톡 메시지를 작성해주세요.`
 
     try {
       const res = await fetch('/api/generate-message', {
@@ -283,5 +281,3 @@ ${avgTest ? `- 일일 테스트 평균 정답률: ${avgTest}` : ''}
     </div>
   )
 }
-
-
