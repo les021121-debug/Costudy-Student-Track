@@ -10,7 +10,7 @@ const NAV = [
   { href: '/dashboard',  icon: LayoutDashboard, label: '대시보드' },
   { href: '/classes',    icon: BookOpen,         label: '반 관리' },
   { href: '/students',   icon: Users,            label: '학생 관리' },
-  { href: '/messages',   icon: MessageSquare,    label: '월말 문자' },
+  { href: '/messages',   icon: MessageSquare,    label: '학부모 문자' },
 ]
 
 export default function Sidebar() {
@@ -45,7 +45,7 @@ export default function Sidebar() {
           </div>
           <div>
             <p className="font-bold text-gray-900 text-sm">코스터디</p>
-            <p className="text-xs text-gray-400">학생관리 시스템</p>
+            <p className="text-xs text-gray-400">브릿지</p>
           </div>
         </div>
       </div>
