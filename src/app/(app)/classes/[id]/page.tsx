@@ -73,6 +73,15 @@ export default function ClassDetailPage() {
     load()
   }
 
+  const deleteLesson = async (lessonId: string, lessonDate: string) => {
+    const dateLabel = format(new Date(lessonDate), 'yyyy년 MM월 dd일', { locale: ko })
+    if (!confirm(`${dateLabel} 수업 기록을 삭제할까요?\n\n학생들의 출결/태도/과제 기록도 함께 삭제되며 복구할 수 없어요.`)) return
+    const supabase = createClient()
+    await supabase.from('student_records').delete().eq('lesson_id', lessonId)
+    await supabase.from('lessons').delete().eq('id', lessonId)
+    load()
+  }
+
   useEffect(() => { if (id) load() }, [id])
 
   const currentIds = students.map(s => s.id)
@@ -145,13 +154,15 @@ export default function ClassDetailPage() {
       ) : (
         <div className="grid gap-3">
           {lessons.map(lesson => (
-            <button
+            <div
               key={lesson.id}
-              className="card text-left hover:shadow-md transition-shadow w-full"
-              onClick={() => { setSelectedLesson(lesson.id); setShowForm(true) }}
+              className="card hover:shadow-md transition-shadow w-full"
             >
               <div className="flex items-center justify-between">
-                <div>
+                <button
+                  className="text-left flex-1 min-w-0"
+                  onClick={() => { setSelectedLesson(lesson.id); setShowForm(true) }}
+                >
                   <p className="font-bold text-gray-900">
                     {format(new Date(lesson.lesson_date), 'yyyy년 MM월 dd일 (EEEE)', { locale: ko })}
                   </p>
@@ -159,10 +170,24 @@ export default function ClassDetailPage() {
                     {lesson.test_total && <span>📝 테스트 {lesson.test_total}문제</span>}
                     {lesson.memo && <span className="truncate max-w-xs">💬 {lesson.memo}</span>}
                   </div>
+                </button>
+                <div className="flex items-center gap-1 flex-shrink-0 ml-3">
+                  <button
+                    onClick={() => { setSelectedLesson(lesson.id); setShowForm(true) }}
+                    className="text-xs text-primary-500 font-medium hover:text-primary-600 px-2 py-1"
+                  >
+                    수정 →
+                  </button>
+                  <button
+                    onClick={() => deleteLesson(lesson.id, lesson.lesson_date)}
+                    className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                    title="수업 기록 삭제"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
-                <span className="text-xs text-primary-500 font-medium">수정 →</span>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}
