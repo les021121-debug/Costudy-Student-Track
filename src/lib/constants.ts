@@ -24,6 +24,7 @@ export const ATTITUDE_NEGATIVE = [
 
 export const HOMEWORK_ITEMS = [
   { key: '완벽제출',           label: '완벽 제출' },
+  { key: '일부제출',           label: '일부 제출' },
   { key: '미제출',             label: '미제출' },
   { key: '풀이성실',           label: '풀이 과정이 성실함' },
   { key: '풀이부실',           label: '풀이 과정이 부실함' },
@@ -33,7 +34,7 @@ export const HOMEWORK_ITEMS = [
   { key: '모르는문제_표시',    label: '모르는 문제 표시해옴 (적극적)' },
 ]
 
-export const ATTENDANCE_OPTIONS = ['출석', '결석', '조퇴', '병결', '기타'] as const
+export const ATTENDANCE_OPTIONS = ['출석', '지각', '결석', '조퇴', '병결', '기타'] as const
 export type AttendanceType = typeof ATTENDANCE_OPTIONS[number]
 
 export const SCORE_LABELS: Record<number, string> = {
