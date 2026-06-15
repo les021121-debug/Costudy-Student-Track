@@ -23,6 +23,9 @@ export default function MessagesPage() {
   const [savedComm, setSavedComm] = useState<string | null>(null)
   const [teacherName, setTeacherName] = useState('')
   const [messageStyle, setMessageStyle] = useState('')
+  const [lessonDates, setLessonDates] = useState<string[]>([])
+  const [calFromMonth, setCalFromMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+  const [calToMonth, setCalToMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
 
   useEffect(() => {
     const load = async () => {
@@ -46,8 +49,12 @@ export default function MessagesPage() {
     if (!selectedClass) return
     const load = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from('student_classes').select('students(id, name, parent_phone)').eq('class_id', selectedClass)
-      if (data) setStudents((data as any[]).map(d => d.students).filter(Boolean))
+      const [{ data: studentData }, { data: lessonData }] = await Promise.all([
+        supabase.from('student_classes').select('students(id, name, parent_phone)').eq('class_id', selectedClass),
+        supabase.from('lessons').select('lesson_date').eq('class_id', selectedClass),
+      ])
+      if (studentData) setStudents((studentData as any[]).map(d => d.students).filter(Boolean))
+      if (lessonData) setLessonDates(lessonData.map(l => l.lesson_date))
       setSelectedStudent('')
       setMessage('')
     }
@@ -215,16 +222,6 @@ ${avgTest ? `- 일일 테스트 평균 정답률: ${avgTest}` : ''}
       <h1 className="text-2xl font-bold text-gray-900 mb-6">학부모 문자</h1>
 
       <div className="card mb-5">
-        {/* 기간 선택 */}
-        <div className="mb-4">
-          <label className="label">기간 선택</label>
-          <div className="flex items-center gap-2">
-            <input className="input flex-1" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-            <span className="text-gray-400 text-sm">~</span>
-            <input className="input flex-1" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
-          </div>
-        </div>
-
         {/* 반 / 학생 선택 */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
@@ -244,6 +241,76 @@ ${avgTest ? `- 일일 테스트 평균 정답률: ${avgTest}` : ''}
               <p className="text-sm text-gray-500 mt-1.5">📞 {selectedStudentInfo.parent_phone}</p>
             )}
           </div>
+        </div>
+
+        {/* 기간 선택 - 미니 달력 */}
+        <div className="mb-4">
+          <label className="label">기간 선택</label>
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { label: '시작일', month: calFromMonth, setMonth: setCalFromMonth, value: dateFrom, setValue: setDateFrom, isFrom: true },
+              { label: '종료일', month: calToMonth, setMonth: setCalToMonth, value: dateTo, setValue: setDateTo, isFrom: false },
+            ].map(({ label, month, setMonth, value, setValue }) => {
+              const year = month.getFullYear()
+              const mon = month.getMonth()
+              const firstDay = new Date(year, mon, 1).getDay()
+              const daysInMonth = new Date(year, mon + 1, 0).getDate()
+              const weeks: (number | null)[][] = []
+              let day = 1 - firstDay
+              while (day <= daysInMonth) {
+                const week = []
+                for (let i = 0; i < 7; i++, day++) {
+                  week.push(day >= 1 && day <= daysInMonth ? day : null)
+                }
+                weeks.push(week)
+              }
+              return (
+                <div key={label}>
+                  <p className="text-xs text-gray-500 mb-1">{label}</p>
+                  <div className="border border-gray-200 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <button onClick={() => setMonth(new Date(year, mon - 1, 1))} className="p-1 text-gray-400 hover:text-gray-700 text-sm">◀</button>
+                      <span className="text-sm font-semibold text-gray-800">{year}년 {mon + 1}월</span>
+                      <button onClick={() => setMonth(new Date(year, mon + 1, 1))} className="p-1 text-gray-400 hover:text-gray-700 text-sm">▶</button>
+                    </div>
+                    <div className="grid grid-cols-7 text-center mb-1">
+                      {['일','월','화','수','목','금','토'].map(d => (
+                        <span key={d} className="text-xs text-gray-400 font-medium py-0.5">{d}</span>
+                      ))}
+                    </div>
+                    {weeks.map((week, wi) => (
+                      <div key={wi} className="grid grid-cols-7 text-center">
+                        {week.map((d, di) => {
+                          if (!d) return <span key={di} />
+                          const dateStr = `${year}-${String(mon + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                          const hasLesson = lessonDates.includes(dateStr)
+                          const isSelected = value === dateStr
+                          const inRange = dateStr >= dateFrom && dateStr <= dateTo
+                          return (
+                            <button
+                              key={di}
+                              onClick={() => setValue(dateStr)}
+                              className={`relative text-xs py-1 rounded-lg transition-colors font-medium
+                                ${isSelected ? 'bg-primary-500 text-white' : inRange ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}
+                              `}
+                            >
+                              {d}
+                              {hasLesson && !isSelected && (
+                                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-400" />
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {selectedClass && lessonDates.length > 0 && (
+            <p className="text-xs text-gray-400 mt-1.5">● 점은 수업 기록이 있는 날짜예요</p>
+          )}
         </div>
 
         {/* 문자 길이 슬라이더 */}
