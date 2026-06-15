@@ -26,6 +26,7 @@ export default function MessagesPage() {
   const [lessonDates, setLessonDates] = useState<string[]>([])
   const [calFromMonth, setCalFromMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
   const [calToMonth, setCalToMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+  const [openCal, setOpenCal] = useState<'from' | 'to' | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -243,14 +244,15 @@ ${avgTest ? `- 일일 테스트 평균 정답률: ${avgTest}` : ''}
           </div>
         </div>
 
-        {/* 기간 선택 - 미니 달력 */}
+        {/* 기간 선택 - 드롭다운 달력 */}
         <div className="mb-4">
           <label className="label">기간 선택</label>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: '시작일', month: calFromMonth, setMonth: setCalFromMonth, value: dateFrom, setValue: setDateFrom, isFrom: true },
-              { label: '종료일', month: calToMonth, setMonth: setCalToMonth, value: dateTo, setValue: setDateTo, isFrom: false },
-            ].map(({ label, month, setMonth, value, setValue }) => {
+          <div className="flex items-center gap-2">
+            {([
+              { key: 'from' as const, value: dateFrom, setValue: setDateFrom, month: calFromMonth, setMonth: setCalFromMonth },
+              { key: 'to' as const, value: dateTo, setValue: setDateTo, month: calToMonth, setMonth: setCalToMonth },
+            ]).map(({ key, value, setValue, month, setMonth }, idx) => {
+              const isOpen = openCal === key
               const year = month.getFullYear()
               const mon = month.getMonth()
               const firstDay = new Date(year, mon, 1).getDay()
@@ -259,58 +261,65 @@ ${avgTest ? `- 일일 테스트 평균 정답률: ${avgTest}` : ''}
               let day = 1 - firstDay
               while (day <= daysInMonth) {
                 const week = []
-                for (let i = 0; i < 7; i++, day++) {
-                  week.push(day >= 1 && day <= daysInMonth ? day : null)
-                }
+                for (let i = 0; i < 7; i++, day++) week.push(day >= 1 && day <= daysInMonth ? day : null)
                 weeks.push(week)
               }
               return (
-                <div key={label}>
-                  <p className="text-xs text-gray-500 mb-1">{label}</p>
-                  <div className="border border-gray-200 rounded-xl p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <button onClick={() => setMonth(new Date(year, mon - 1, 1))} className="p-1 text-gray-400 hover:text-gray-700 text-sm">◀</button>
-                      <span className="text-sm font-semibold text-gray-800">{year}년 {mon + 1}월</span>
-                      <button onClick={() => setMonth(new Date(year, mon + 1, 1))} className="p-1 text-gray-400 hover:text-gray-700 text-sm">▶</button>
-                    </div>
-                    <div className="grid grid-cols-7 text-center mb-1">
-                      {['일','월','화','수','목','금','토'].map(d => (
-                        <span key={d} className="text-xs text-gray-400 font-medium py-0.5">{d}</span>
-                      ))}
-                    </div>
-                    {weeks.map((week, wi) => (
-                      <div key={wi} className="grid grid-cols-7 text-center">
-                        {week.map((d, di) => {
-                          if (!d) return <span key={di} />
-                          const dateStr = `${year}-${String(mon + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-                          const hasLesson = lessonDates.includes(dateStr)
-                          const isSelected = value === dateStr
-                          const inRange = dateStr >= dateFrom && dateStr <= dateTo
-                          return (
-                            <button
-                              key={di}
-                              onClick={() => setValue(dateStr)}
-                              className={`relative text-xs py-1 rounded-lg transition-colors font-medium
-                                ${isSelected ? 'bg-primary-500 text-white' : inRange ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}
-                              `}
-                            >
-                              {d}
-                              {hasLesson && !isSelected && (
-                                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-400" />
-                              )}
-                            </button>
-                          )
-                        })}
+                <div key={key} className="relative flex-1">
+                  <button
+                    type="button"
+                    className="input w-full text-left text-sm"
+                    onClick={() => setOpenCal(isOpen ? null : key)}
+                  >
+                    {value}
+                  </button>
+                  {isOpen && (
+                    <div className="absolute top-full mt-1 left-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-64">
+                      <div className="flex items-center justify-between mb-2">
+                        <button onClick={() => setMonth(new Date(year, mon - 1, 1))} className="p-1 text-gray-400 hover:text-gray-700 text-sm">◀</button>
+                        <span className="text-sm font-semibold text-gray-800">{year}년 {mon + 1}월</span>
+                        <button onClick={() => setMonth(new Date(year, mon + 1, 1))} className="p-1 text-gray-400 hover:text-gray-700 text-sm">▶</button>
                       </div>
-                    ))}
-                  </div>
+                      <div className="grid grid-cols-7 text-center mb-1">
+                        {['일','월','화','수','목','금','토'].map(d => (
+                          <span key={d} className="text-xs text-gray-400 font-medium py-0.5">{d}</span>
+                        ))}
+                      </div>
+                      {weeks.map((week, wi) => (
+                        <div key={wi} className="grid grid-cols-7 text-center">
+                          {week.map((d, di) => {
+                            if (!d) return <span key={di} />
+                            const dateStr = `${year}-${String(mon + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                            const hasLesson = lessonDates.includes(dateStr)
+                            const isSelected = value === dateStr
+                            const inRange = dateStr >= dateFrom && dateStr <= dateTo
+                            return (
+                              <button
+                                key={di}
+                                onClick={() => { setValue(dateStr); setOpenCal(null) }}
+                                className={`relative text-xs py-1 rounded-lg transition-colors font-medium
+                                  ${isSelected ? 'bg-primary-500 text-white' : inRange ? 'bg-primary-50 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}
+                                `}
+                              >
+                                {d}
+                                {hasLesson && !isSelected && (
+                                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-400" />
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      ))}
+                      {selectedClass && lessonDates.length > 0 && (
+                        <p className="text-xs text-gray-400 mt-2">● 수업 기록 있는 날짜</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}
+            <span className="text-gray-400 text-sm flex-shrink-0">~</span>
           </div>
-          {selectedClass && lessonDates.length > 0 && (
-            <p className="text-xs text-gray-400 mt-1.5">● 점은 수업 기록이 있는 날짜예요</p>
-          )}
         </div>
 
         {/* 문자 길이 슬라이더 */}
