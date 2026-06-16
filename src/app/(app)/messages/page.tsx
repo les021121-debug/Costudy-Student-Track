@@ -178,7 +178,7 @@ ${avgTest ? `- 일일 테스트 평균 정답률: ${avgTest}` : ''}
         .eq('student_id', selectedStudent)
         .eq('class_id', selectedClass)
         .eq('year_month', yearMonth)
-        .single()
+        .maybeSingle()
 
       if (existing) {
         setSavedComm(existing.id)
