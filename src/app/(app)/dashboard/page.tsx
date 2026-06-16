@@ -19,7 +19,7 @@ export default function DashboardPage() {
 
       const [{ count: classCount }, { count: studentCount }, { data: teacher }] = await Promise.all([
         supabase.from('classes').select('*', { count: 'exact', head: true }).eq('teacher_id', user.id),
-        supabase.from('students').select('*', { count: 'exact', head: true }).eq('teacher_id', user.id),
+        supabase.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('teachers').select('name').eq('id', user.id).single(),
       ])
 
