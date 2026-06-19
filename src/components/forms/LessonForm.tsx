@@ -14,6 +14,7 @@ type StudentRecord = {
   homework: string[]
   test_correct: string
   test_excluded: boolean
+  test_excluded_total: string
   special_note: string
 }
 
@@ -25,6 +26,7 @@ const defaultRecord = (): StudentRecord => ({
   homework: [],
   test_correct: '',
   test_excluded: false,
+  test_excluded_total: '',
   special_note: '',
 })
 
@@ -78,6 +80,7 @@ export default function LessonForm({
           homework: r.homework || [],
           test_correct: r.test_correct?.toString() || '',
           test_excluded: r.test_excluded || false,
+          test_excluded_total: r.test_excluded_total?.toString() || '',
           special_note: r.special_note || '',
         }
       })
@@ -127,6 +130,8 @@ export default function LessonForm({
       homework: records[s.id]?.homework || [],
       test_correct: records[s.id]?.test_correct ? parseInt(records[s.id].test_correct) : null,
       test_excluded: records[s.id]?.test_excluded || false,
+      test_excluded_total: records[s.id]?.test_excluded && records[s.id]?.test_excluded_total
+        ? parseInt(records[s.id].test_excluded_total) : null,
       special_note: records[s.id]?.special_note || null,
     }))
 
@@ -207,7 +212,7 @@ export default function LessonForm({
                         }`}>{rec.attendance}</span>
                         {testTotal && rec.test_correct && (
                           <span className="text-xs text-gray-500">
-                            {rec.test_correct}/{testTotal}{rec.test_excluded && <span className="text-amber-500 ml-1">(별도)</span>}
+                            {rec.test_correct}/{rec.test_excluded && rec.test_excluded_total ? rec.test_excluded_total : testTotal}{rec.test_excluded && <span className="text-amber-500 ml-1">(별도)</span>}
                           </span>
                         )}
                       </div>
@@ -319,13 +324,13 @@ export default function LessonForm({
                         {/* 테스트 */}
                         {testTotal && (
                           <div>
-                            <label className="label">📝 테스트 맞은 개수 (/{testTotal})</label>
-                            <div className="flex items-center gap-3">
+                            <label className="label">📝 테스트 맞은 개수 (/{rec.test_excluded && rec.test_excluded_total ? rec.test_excluded_total : testTotal})</label>
+                            <div className="flex items-center gap-3 flex-wrap">
                               <input
                                 className="input w-32"
                                 type="number"
                                 min={0}
-                                max={parseInt(testTotal)}
+                                max={rec.test_excluded && rec.test_excluded_total ? parseInt(rec.test_excluded_total) : parseInt(testTotal)}
                                 placeholder="맞은 개수"
                                 value={rec.test_correct}
                                 onChange={e => update(student.id, 'test_correct', e.target.value)}
@@ -340,6 +345,19 @@ export default function LessonForm({
                                 별도 테스트 (반 평균 제외)
                               </label>
                             </div>
+                            {rec.test_excluded && (
+                              <div className="mt-2">
+                                <label className="text-xs text-amber-600 font-medium">이 학생의 총 문항 수 (반 기준과 다를 경우 입력)</label>
+                                <input
+                                  className="input w-32 mt-1"
+                                  type="number"
+                                  min={1}
+                                  placeholder={`기본: ${testTotal}`}
+                                  value={rec.test_excluded_total}
+                                  onChange={e => update(student.id, 'test_excluded_total', e.target.value)}
+                                />
+                              </div>
+                            )}
                           </div>
                         )}
 
