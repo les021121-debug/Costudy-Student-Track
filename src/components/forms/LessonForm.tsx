@@ -13,6 +13,7 @@ type StudentRecord = {
   attitude_score: number
   homework: string[]
   test_correct: string
+  test_excluded: boolean
   special_note: string
 }
 
@@ -23,6 +24,7 @@ const defaultRecord = (): StudentRecord => ({
   attitude_score: 3,
   homework: [],
   test_correct: '',
+  test_excluded: false,
   special_note: '',
 })
 
@@ -75,6 +77,7 @@ export default function LessonForm({
           attitude_score: r.attitude_score || 3,
           homework: r.homework || [],
           test_correct: r.test_correct?.toString() || '',
+          test_excluded: r.test_excluded || false,
           special_note: r.special_note || '',
         }
       })
@@ -123,6 +126,7 @@ export default function LessonForm({
       attitude_score: records[s.id]?.attitude_score || 3,
       homework: records[s.id]?.homework || [],
       test_correct: records[s.id]?.test_correct ? parseInt(records[s.id].test_correct) : null,
+      test_excluded: records[s.id]?.test_excluded || false,
       special_note: records[s.id]?.special_note || null,
     }))
 
@@ -131,9 +135,12 @@ export default function LessonForm({
     onSaved()
   }
 
-  // 반 평균 계산
+  // 반 평균 계산 (별도 테스트로 표시된 학생은 제외)
   const avg = (() => {
-    const vals = students.map(s => records[s.id]?.test_correct).filter(v => v !== '' && v !== undefined).map(Number).filter(n => !isNaN(n))
+    const vals = students
+      .filter(s => !records[s.id]?.test_excluded)
+      .map(s => records[s.id]?.test_correct)
+      .filter(v => v !== '' && v !== undefined).map(Number).filter(n => !isNaN(n))
     if (!vals.length || !testTotal) return null
     const total = parseInt(testTotal)
     if (!total) return null
@@ -199,7 +206,9 @@ export default function LessonForm({
                           'bg-amber-50 text-amber-600'
                         }`}>{rec.attendance}</span>
                         {testTotal && rec.test_correct && (
-                          <span className="text-xs text-gray-500">{rec.test_correct}/{testTotal}</span>
+                          <span className="text-xs text-gray-500">
+                            {rec.test_correct}/{testTotal}{rec.test_excluded && <span className="text-amber-500 ml-1">(별도)</span>}
+                          </span>
                         )}
                       </div>
                       {isOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
@@ -311,15 +320,26 @@ export default function LessonForm({
                         {testTotal && (
                           <div>
                             <label className="label">📝 테스트 맞은 개수 (/{testTotal})</label>
-                            <input
-                              className="input w-32"
-                              type="number"
-                              min={0}
-                              max={parseInt(testTotal)}
-                              placeholder="맞은 개수"
-                              value={rec.test_correct}
-                              onChange={e => update(student.id, 'test_correct', e.target.value)}
-                            />
+                            <div className="flex items-center gap-3">
+                              <input
+                                className="input w-32"
+                                type="number"
+                                min={0}
+                                max={parseInt(testTotal)}
+                                placeholder="맞은 개수"
+                                value={rec.test_correct}
+                                onChange={e => update(student.id, 'test_correct', e.target.value)}
+                              />
+                              <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  className="accent-amber-500"
+                                  checked={rec.test_excluded}
+                                  onChange={e => update(student.id, 'test_excluded', e.target.checked)}
+                                />
+                                별도 테스트 (반 평균 제외)
+                              </label>
+                            </div>
                           </div>
                         )}
 
