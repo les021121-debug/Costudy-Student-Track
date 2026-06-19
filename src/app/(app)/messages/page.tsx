@@ -109,7 +109,7 @@ export default function MessagesPage() {
       r.attitude_negative?.forEach((k: string) => negativeCounts[k] = (negativeCounts[k] || 0) + 1)
       r.homework?.forEach((k: string) => homeworkCounts[k] = (homeworkCounts[k] || 0) + 1)
       const lesson = lessons.find(l => l.id === r.lesson_id)
-      if (r.test_correct !== null && lesson?.test_total) {
+      if (r.test_correct !== null && lesson?.test_total && !r.test_excluded) {
         testScores.push({ correct: r.test_correct, total: lesson.test_total })
       }
     })
